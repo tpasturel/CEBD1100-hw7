@@ -1,170 +1,182 @@
-import os, argparse, csv
+import argparse
+import os.path as op
+import csv
 import matplotlib.pyplot as plt
 import numpy as np
+import statistics
+import re
 
-def arg_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input_file")
-    parser.add_argument("-d", "--degree", 
-                        help="Polynomial degree to use for linear regression (defaults to 1)")
-    args = parser.parse_args()
-    return args
-
-def is_there_an_input_file():
-    # While building this function, I ran through the two errors where either
-    # I provided the wrong input file name or no input file name at all
-    # and looked for a way to address both
-    args = arg_parser()
-    if args.input_file is not None:
-        input_file = os.path.join(os.getcwd(),args.input_file)
-        try:
-            with open(input_file) as data:
-                read_data = data.read()
-                return input_file
-        except FileNotFoundError:
-            print("Failed to open" + str(input_file) + \
-            ". \nPlease look for a potential typo in your file name and/or file path.")
-            exit()
-    else:
-        print("Please provide an input file.")
-        exit()
-
-# Setting the input file calling the function I created above
-input_file = is_there_an_input_file()
-
-def convert_type(element):
-    # Case 2: is an emptry str, should be ignored
-    if element == "": # len(element) == 0
-        return None
-    # Case 4: is a # with no ., should be int
+def convert_type(data_value):
     try:
-        return int(element)
+        return int(data_value)
     except ValueError:
-        # Case 3: has a . but is a #, should be float
         try:
-            return float(element)
+            return float(data_value)
         except ValueError:
-            # Case 1: is a string, should remain a string
-            return element
+            return data_value
 
-
-# My weird way of dealing with either commas, single spaces or double spaces separators
-def format_row(row):
-    if "," in row:
-        row = row
+# I modified this function a bit and I am calling it in main because it was failing
+# before with passing it the -H option (maybe I deleted something at some point, by mistake)
+def lines_to_dict(lines, header=False, debug=False):
+    # I modified your if/else statement 
+    column_titles = lines[0]
+    if header:
+        print("Here are the input file's first column: " + str(column_titles))
+        exit()
+    
+    if debug:
+        print("Here are the first two lines of the input file : \n" + str(lines[0:1]) 
+        + "\n" + str(lines[1:2]))
+        exit()
+ 
     else:
-        # Shrinking multiples spaces separators into a single one and replacing them 
-        # by a comma in each row
-        row = " ".join(row.split())
-        row = row.replace(" ", ",")
-    return row
+        #column_titles = list(range(1, len(lines[0])+1))
+        column_titles = lines[0]
+        lines = lines[1:]
 
-def populate_outer_list_orig():
-    data=open(input_file, 'r')
-    my_read_data = data.read()
-    my_read_data1 = my_read_data.split('\n')    
-    outer_list = []
-    for row in my_read_data1:
-        row = format_row(row)
-        row_list = []
-        for element in row.split(","):    
-            new_element = convert_type(element)
-            if new_element is not None:
-                row_list += [new_element]
-        if len(row_list) > 0:
-            outer_list += [row_list]
-    return outer_list
+    data_dict = {}
+    for idx, column in enumerate(column_titles):
+        data_dict[column] = []
+        for row in lines:
+            data_dict[column] += [row[idx]]
+    return data_dict
 
-def populate_outer_list_csv():
-    with open(input_file, 'r') as data:
-        # Trying to read with comma separators, if csv.reader fails using commas, 
-        # getting rid of the error and using default "one or more spaces" delimiter
-        try:
-            inputcsv = csv.reader(data, delimiter=',')
-        except csv.Error:
-            pass
+def parse_file(data_file, delimiter, debug=False):
+    # Verify the file exists
+    assert(op.isfile(data_file))
+
+    # open it as a csv (not checking delimiters, so you can do better)
+    with open(data_file, 'r') as fhandle:
+        csv_reader = csv.reader(fhandle, delimiter=delimiter)
+
+        # Add each line in the file to a list
+        lines = []
+        if debug:
+            count = 0
+        for line in csv_reader:
+            if debug:
+                if count > 2:
+                    break
+                count += 1
+            newline = []
+            for value in line:
+                newline += [convert_type(value)]
+
+            if len(newline) > 0:
+                lines += [newline]
+
+    # Return all the contents of our file
+    return lines
+
+def generate_points(coefs, min_val, max_val):
+    xs = np.arange(min_val, max_val, (max_val-min_val)/100)
+    return xs, np.polyval(coefs, xs)
+
+def plot_data(dd, debug=False, plot=False, polys=[1,2,3,4]):
+    # dd stands for data_dictionary, debug doesn't plot
+    if debug:
+        number_combinations = 0
+
+    # Preventing the function from plotting the data if the -p switch if provided 
+    if not plot:
+        return 
+    ncols = len(dd.keys())
+    if not debug:
+        fig = plt.Figure(figsize=(30, 30))   
+    for i1, column1 in enumerate(dd.keys()):
+        for i2, column2 in enumerate(dd.keys()):
+            if debug:
+                number_combinations += 1
+                print(column1, column2)
+                # import pdb
+                # pdb.set_trace()
+            else:
+                # If my grid is :
+                # 1  2  3  4  5
+                # 6  7  8  9  10
+                # 11 12 13 14 15
+                #  ... then, I want to index it at i1*ncols + i2   (+1)
+                loc = i1*ncols + i2 + 1
+                plt.subplot(ncols, ncols, loc)
+                x = dd[column1]
+                y = dd[column2]
+                
+                if str(x) and str(y):
+                    pass
+                else:
+                    plt.scatter(x, y)
+                    # plt.xlabel(column1)
+                    # plt.ylabel(column2)
+                    # plt.title("{0} x {1}".format(column1, column2))
+
+                # for poly_order in polys:
+                #     coefs = np.polyfit(x, y, poly_order)  # we also want to do this for 2, 3
+                #     xs, new_line = generate_points(coefs, min(x), max(x))
+                #     plt.plot(xs, new_line)
+    if not debug:
+        # Note: I have spent no effort making it pretty, and recommend that you do :)
+        # plt.legend()
+        # plt.tight_layout()
+        # plt.show()
+        plt.savefig("./my_pairs_plot.png")
+
+    if debug:
+        print(len(dd.keys()), number_combinations)
+    return 0
+
+
+def check_column(dd, data_file=False, column=False):
+    # Checking that a column name was provided
+    if column:
+        # Checking that the column name actually exists in the input file
+        if column not in dd.keys():
+            print("Please provide a column name that exists in " + str(data_file) + " file." )
+            exit()
+        
+        # Calculating the several requested values    
+        values = dd[column]
+        mean = statistics.mean(values)
+        stdev = statistics.stdev(values)
+        print("tc column's mean value is: " + str(mean) + ".")
+        print("tc column's min value is: " + str(min(values)) + ".")
+        print("tc column's mean value is: " + str(max(values)) + ".")         
+        print("tc column's values standard deviation is: " + str(stdev) + ".")
+        
+        # Determining whether the column's data is categorical or continuous
+        uniq_values = set(values)
+        print(str(column) + " column contains " + str(len(values)) + " rows including " 
+        + str(len(uniq_values)) + " unique values.")
+        ratio = round(((int(len((uniq_values))) / int(len(values))) * 100), 2)
+        if ratio < 20:
+            print("The number of uniq rows in " + str(column) + " is of " + str(ratio) + "%. "
+            "This data is therefore most likely categorical.")
         else:
-            inputcsv = csv.reader(data)
-            outer_list = []
-            for row in inputcsv:
-                row_list = []
-                for (index,element) in enumerate(row):
-                    new_element = convert_type(element)
-                    if new_element is not None:
-                        row_list += [new_element]
-                if len(row_list) > 0:
-                    outer_list += [row_list]
-            return outer_list
-
-def populate_dict():
-    dd = {}
-    outer_list = populate_outer_list_orig()
-    for location, column_headings in enumerate(outer_list[0]):
-        # Setting the dictionary's keys based on outer_list's indexes
-        dd[location] = []
-        for row in outer_list[:]:
-            dd[location] += [row[location]]
-    return dd
-
-
-def define_polynomial_degree():
-    parser = arg_parser()
-    value = parser.degree
-    if value is None:
-        degree = 1
-    else:   
-        degree = value
-    return degree
-
-# This function does not yet plot the data in a consistent way because I am not really sure 
-# on how to plot together the values from each column of each list in outer_list_orig :(
-def plot_data():
-    dd = populate_dict()
-    for column1 in dd.keys():
-        xlist = []
-        ylist = []
-        for column2 in dd.keys():
-            # Defining the lists of values to apply regression on and performing polynomial regression 
-            x = np.array(dd[column1])
-            y = np.array(dd[column2])
-            degree = define_polynomial_degree()
-            coef = np.polyfit(x, y, int(degree))
-            trend = np.poly1d(coef)
-            minx = np.min(x)
-            maxx = np.max(x)
-            miny = np.min(y)
-            maxy = np.max(y)
-            plt.xlim(minx, maxx)
-            plt.ylim(miny, maxy)
-            plt.plot(x, y, 'yo', x, trend(x))
-            plt.show()
-            #return(x, y)
-
-# I kept this but it does not provide the expected results
-# def multi_plot():
-#     x = plot_data()[0]
-#     y = plot_data()[1]
-#     fig, ax = plt.subplots(nrows = 10, ncols = 14)
-#     for row in ax:
-#         for col in row:
-#             degree = define_polynomial_degree()
-#             coef = np.polyfit(x, y, int(degree))
-#             trend = np.poly1d(coef)
-#             minx = np.min(x)
-#             maxx = np.max(x)
-#             miny = np.min(y)
-#             maxy = np.max(y)
-#             plt.xlim(minx, maxx)
-#             plt.ylim(miny, maxy)
-#             col.plot(x, y, 'yo', x, trend(x))
-#     plt.show()
+            print("The number of uniq rows in " + str(column) + " is of " + str(ratio) + "%. "
+            "This data is therefore most likely continuous.")
+             
 
 def main():
-    arg_parser()
-    populate_outer_list_orig()
-    populate_dict()
-    populate_outer_list_csv()
-    plot_data()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("data_file", type=str,
+                        help="Input CSV data file for plotting")
+    parser.add_argument("delimiter", type=str,
+                        help="the delimiter used in your file")
+    parser.add_argument('-x', '--debug', action="store_true",
+                        help="only prints start of file")
+    parser.add_argument('-H', '--header', action="store_true",
+                        help="determines if a header is present")
+    parser.add_argument('-p', '--plot'  , action="store_true",
+                        help="determines if we plot the data or not")
+    parser.add_argument('-s', '--summary', action='store', dest='column', type=str,
+                        help="perform a data sanity check for the provided column")
+    args = parser.parse_args()
+    my_data = parse_file(args.data_file, args.delimiter, debug=args.debug)
+    data_dictionary = lines_to_dict(my_data, header=args.header, debug=args.debug)
+    #print(data_dictionary)
+    lines_to_dict(my_data, header=args.header, debug=args.debug)
+    plot_data(data_dictionary, debug=args.debug, plot=args.plot)
+    data_dictionary2 = lines_to_dict(my_data)
+    check_column(data_dictionary2, data_file=args.data_file, column=args.column)
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()
