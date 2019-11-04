@@ -155,7 +155,7 @@ def check_column(dd, data_file=False, column=False):
             print("The number of unique rows in " + str(column) + " represents " + str(ratio) 
             + "% of the total number of rows in the column. This data is therefore most likely continuous.")
     else:
-        print("Please provice a column name. The script's -H option allows to see the content of the first line of the file.")         
+        exit()         
 
 def main():
     parser = argparse.ArgumentParser()
