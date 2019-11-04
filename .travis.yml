@@ -12,7 +12,7 @@ before_install:
 script:
  - python3 CEBD1100_Homework7_ThibaultPasturel.py diabetes.data " " -x
  - python3 CEBD1100_Homework7_ThibaultPasturel.py diabetes.data " " -H
- - python3 CEBD1100_Homework7_ThibaultPasturel.py diabetes.data " " -H
+ - python3 CEBD1100_Homework7_ThibaultPasturel.py diabetes.data " "
  - python3 CEBD1100_Homework7_ThibaultPasturel.py diabetes.data " " -p
  - python3 CEBD1100_Homework7_ThibaultPasturel.py diabetes.data " " -s bogus
  - python3 CEBD1100_Homework7_ThibaultPasturel.py diabetes.data " " -s tc
