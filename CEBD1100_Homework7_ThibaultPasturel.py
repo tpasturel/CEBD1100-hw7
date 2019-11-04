@@ -148,11 +148,11 @@ def check_column(dd, data_file=False, column=False):
         + str(len(uniq_values)) + " unique values.")
         ratio = round(((int(len((uniq_values))) / int(len(values))) * 100), 2)
         if ratio < 20:
-            print("The number of uniq rows in " + str(column) + " is of " + str(ratio) + "%. "
-            "This data is therefore most likely categorical.")
+            print("The number of uniq rows in " + str(column) + " represents " + str(ratio) 
+            + "% of the total number of rows in the column. This data is therefore most likely categorical.")
         else:
-            print("The number of uniq rows in " + str(column) + " is of " + str(ratio) + "%. "
-            "This data is therefore most likely continuous.")
+            print("The number of uniq rows in " + str(column) + " represents " + str(ratio) 
+            + "% of the total number of rows in the column. This data is therefore most likely continuous.")
              
 
 def main():
