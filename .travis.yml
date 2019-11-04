@@ -10,4 +10,4 @@ before_install:
  - mv diabetes.rwrite1.txt diabetes.data
 
 script:
- - python3 CEBD1100_Homework7_FromGreg.py --help
+ - python3 CEBD1100_Homework7_ThibaultPasturel.py --help
