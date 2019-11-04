@@ -20,12 +20,12 @@ def convert_type(data_value):
 def lines_to_dict(lines, header=False, debug=False):
     column_titles = lines[0]
     if header:
-        print("Here are the input file's first column: " + str(column_titles))
+        print("Here are the input file's column headers: " + str(column_titles))
         exit()
     
     if debug:
-        print("Here are the first two lines of the input file : \n" + str(lines[0:1]) 
-        + "\n" + str(lines[1:2]))
+        print("Here are the first three lines of the input file: \n" + str(lines[0:1]) 
+        + "\n" + str(lines[1:2]) + "\n" + str(lines[2:3]))
         exit()
  
     else:
@@ -130,6 +130,7 @@ def check_column(dd, data_file=False, column=False):
         # Checking that the column name actually exists in the input file
         if column not in dd.keys():
             print("Please provide a column name that exists in " + str(data_file) + " file." )
+            print("The script's -H option will allow you to see the input file's column headers.")
             exit()
         
         # Calculating the several requested values    
