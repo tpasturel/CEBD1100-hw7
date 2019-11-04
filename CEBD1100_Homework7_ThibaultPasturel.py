@@ -18,7 +18,6 @@ def convert_type(data_value):
 # I modified this function a bit and I am calling it in main because it was failing
 # before with passing it the -H option (maybe I deleted something at some point, by mistake)
 def lines_to_dict(lines, header=False, debug=False):
-    # I modified your if/else statement 
     column_titles = lines[0]
     if header:
         print("Here are the input file's first column: " + str(column_titles))
@@ -136,11 +135,13 @@ def check_column(dd, data_file=False, column=False):
         # Calculating the several requested values    
         values = dd[column]
         mean = statistics.mean(values)
+        minimum = min(values)
+        maximum = max(values)
         stdev = statistics.stdev(values)
         print("tc column's mean value is: " + str(mean) + ".")
-        print("tc column's min value is: " + str(min(values)) + ".")
-        print("tc column's mean value is: " + str(max(values)) + ".")         
-        print("tc column's values standard deviation is: " + str(stdev) + ".")
+        print("tc column's min value is: " + str(round(minimum, 2)) + ".")
+        print("tc column's mean value is: " + str(round(maximum, 2)) + ".")         
+        print("tc column's values standard deviation is: " + str((round(stdev, 2))) + ".")
         
         # Determining whether the column's data is categorical or continuous
         uniq_values = set(values)
@@ -148,12 +149,13 @@ def check_column(dd, data_file=False, column=False):
         + str(len(uniq_values)) + " unique values.")
         ratio = round(((int(len((uniq_values))) / int(len(values))) * 100), 2)
         if ratio < 20:
-            print("The number of uniq rows in " + str(column) + " represents " + str(ratio) 
+            print("The number of unique rows in " + str(column) + " represents " + str(ratio) 
             + "% of the total number of rows in the column. This data is therefore most likely categorical.")
         else:
-            print("The number of uniq rows in " + str(column) + " represents " + str(ratio) 
+            print("The number of unique rows in " + str(column) + " represents " + str(ratio) 
             + "% of the total number of rows in the column. This data is therefore most likely continuous.")
-             
+    else:
+        print("Please provice a column name. The script's -H option allows to see the content of the first line of the file.")         
 
 def main():
     parser = argparse.ArgumentParser()
