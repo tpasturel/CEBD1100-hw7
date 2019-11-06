@@ -18,14 +18,15 @@ def convert_type(data_value):
 # I modified this function a bit and I am calling it in main because it was failing
 # before with passing it the -H option (maybe I deleted something at some point, by mistake)
 def lines_to_dict(lines, header=False, debug=False):
+    # I modified your if/else statement 
     column_titles = lines[0]
     if header:
-        print("Here are the input file's column headers: " + str(column_titles))
+        print("Here are the input file's first column: " + str(column_titles))
         exit()
     
     if debug:
-        print("Here are the first three lines of the input file: \n" + str(lines[0:1]) 
-        + "\n" + str(lines[1:2]) + "\n" + str(lines[2:3]))
+        print("Here are the first two lines of the input file : \n" + str(lines[0:1]) 
+        + "\n" + str(lines[1:2]))
         exit()
  
     else:
@@ -130,19 +131,16 @@ def check_column(dd, data_file=False, column=False):
         # Checking that the column name actually exists in the input file
         if column not in dd.keys():
             print("Please provide a column name that exists in " + str(data_file) + " file." )
-            print("The script's -H option will allow you to see the input file's column headers.")
             exit()
         
         # Calculating the several requested values    
         values = dd[column]
         mean = statistics.mean(values)
-        minimum = min(values)
-        maximum = max(values)
         stdev = statistics.stdev(values)
         print("tc column's mean value is: " + str(mean) + ".")
-        print("tc column's min value is: " + str(round(minimum, 2)) + ".")
-        print("tc column's mean value is: " + str(round(maximum, 2)) + ".")         
-        print("tc column's values standard deviation is: " + str((round(stdev, 2))) + ".")
+        print("tc column's min value is: " + str(min(values)) + ".")
+        print("tc column's mean value is: " + str(max(values)) + ".")         
+        print("tc column's values standard deviation is: " + str(stdev) + ".")
         
         # Determining whether the column's data is categorical or continuous
         uniq_values = set(values)
@@ -150,13 +148,12 @@ def check_column(dd, data_file=False, column=False):
         + str(len(uniq_values)) + " unique values.")
         ratio = round(((int(len((uniq_values))) / int(len(values))) * 100), 2)
         if ratio < 20:
-            print("The number of unique rows in " + str(column) + " represents " + str(ratio) 
-            + "% of the total number of rows in the column. This data is therefore most likely categorical.")
+            print("The number of uniq rows in " + str(column) + " is of " + str(ratio) + "%. "
+            "This data is therefore most likely categorical.")
         else:
-            print("The number of unique rows in " + str(column) + " represents " + str(ratio) 
-            + "% of the total number of rows in the column. This data is therefore most likely continuous.")
-    else:
-        exit()         
+            print("The number of uniq rows in " + str(column) + " is of " + str(ratio) + "%. "
+            "This data is therefore most likely continuous.")
+             
 
 def main():
     parser = argparse.ArgumentParser()
